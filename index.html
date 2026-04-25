@@ -450,8 +450,114 @@ tr:last-child td { border-bottom: none; }
 }
 .footer a { color: var(--text-dim); text-decoration: none; border-bottom: 1px dashed var(--text-muted); }
 
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  padding: 28px;
+  position: relative;
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+.modal-close {
+  position: absolute;
+  top: 20px; right: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.modal-close:hover { background: var(--red-soft); color: var(--red); border-color: var(--red); }
+.modal-header { margin-bottom: 20px; padding-right: 50px; }
+.modal-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.modal-sub { font-size: 13px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-top: 4px; }
+.modal-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.modal-kpi {
+  background: var(--surface-2);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}
+.modal-kpi-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.modal-kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.modal-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.modal-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+.modal-table {
+  width: 100%;
+  font-size: 12px;
+}
+.modal-table th {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 6px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.modal-table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.modal-table tr:last-child td { border-bottom: none; }
+.modal-table .num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+.modal-chart-wrap { position: relative; height: 220px; }
+.mgr-row { cursor: pointer; transition: all 0.15s; }
+.mgr-row:hover { background: var(--surface); transform: translateX(2px); }
+
 /* MOBILE */
 @media (max-width: 900px) {
+  .modal-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .modal { padding: 20px; }
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .grid-2col, .grid-3col { grid-template-columns: 1fr; }
   .rec-grid { grid-template-columns: 1fr; }
@@ -582,6 +688,14 @@ tr:last-child td { border-bottom: none; }
     <span style="opacity:0.5">Для смены источников данных — отредактируй константы SHEETS_* в коде страницы</span>
   </div>
 
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div id="modalContent"></div>
+  </div>
 </div>
 
 <script>
@@ -1032,7 +1146,7 @@ function renderOnlineMgrs() {
   const max = Math.max(...arr.map(a=>a.qual),1);
   document.getElementById('mgrOnline').innerHTML = arr.map(a => {
     const cls = a.convQ >= 25 ? 'top' : a.convQ >= 15 ? 'mid' : 'bad';
-    return `<div class="mgr-row ${cls}">
+    return `<div class="mgr-row ${cls}" onclick="openOnlineMgr('${a.name.replace(/'/g,"\\'")}')">
       <div class="mgr-name">${a.name}</div>
       <div class="mgr-bar-wrap"><div class="mgr-bar" style="width:${(a.qual/max)*100}%"></div></div>
       <div class="mgr-num">${a.qual} квал</div>
@@ -1072,7 +1186,7 @@ function renderShopMgrs() {
   const max = Math.max(...arr.map(a=>a.count),1);
   document.getElementById('mgrShop').innerHTML = arr.map(a => {
     const cls = a.count <= 3 ? 'top' : a.count <= 8 ? 'mid' : 'bad';
-    return `<div class="mgr-row ${cls}">
+    return `<div class="mgr-row ${cls}" onclick="openShopMgr('${a.name.replace(/'/g,"\\'")}')">
       <div class="mgr-name">${a.name}</div>
       <div class="mgr-bar-wrap"><div class="mgr-bar" style="width:${(a.count/max)*100}%"></div></div>
       <div class="mgr-num">${a.count} отк</div>
@@ -1152,8 +1266,189 @@ function renderRecommendations() {
 }
 
 // ============================================================
-// PERIOD SWITCHER
+// DRILLDOWN — детализация по менеджеру
 // ============================================================
+let modalChart = null;
+
+function openModal() {
+  document.getElementById('modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+  document.body.style.overflow = '';
+  if (modalChart) { modalChart.destroy(); modalChart = null; }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function openOnlineMgr(name) {
+  const o = filterByPeriod(state.online).filter(d => d.name === name);
+  if (!o.length) return;
+
+  const leads = o.reduce((s,d)=>s+d.total,0);
+  const qual = o.reduce((s,d)=>s+d.totalQ,0);
+  const orders = o.reduce((s,d)=>s+d.orders,0);
+  const buyouts = o.reduce((s,d)=>s+d.buyouts,0);
+
+  const channels = [
+    {name:'ВКонтакте', l:o.reduce((s,d)=>s+d.vk,0), q:o.reduce((s,d)=>s+d.vkQ,0)},
+    {name:'Telegram', l:o.reduce((s,d)=>s+d.tg,0), q:o.reduce((s,d)=>s+d.tgQ,0)},
+    {name:'Instagram', l:o.reduce((s,d)=>s+d.inst,0), q:o.reduce((s,d)=>s+d.instQ,0)},
+    {name:'Сайт', l:o.reduce((s,d)=>s+d.site,0), q:o.reduce((s,d)=>s+d.siteQ,0)},
+    {name:'Авито', l:o.reduce((s,d)=>s+d.avito,0), q:o.reduce((s,d)=>s+d.avitoQ,0)}
+  ].sort((a,b)=>b.l-a.l);
+
+  // Сравнение со средним по команде
+  const all = filterByPeriod(state.online);
+  const teamConv = pct(all.reduce((s,d)=>s+d.totalQ,0), all.reduce((s,d)=>s+d.total,0));
+  const myConv = pct(qual, leads);
+
+  const diff = myConv - teamConv;
+  const diffStr = diff > 0 ? `+${diff}%` : `${diff}%`;
+  const diffColor = diff >= 0 ? 'var(--green)' : 'var(--red)';
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">${name}</div>
+      <div class="modal-sub">онлайн-менеджер · ${o.length} рабочих смен</div>
+    </div>
+
+    <div class="modal-kpi-row">
+      <div class="modal-kpi"><div class="modal-kpi-label">Лиды</div><div class="modal-kpi-value">${fmt(leads)}</div></div>
+      <div class="modal-kpi"><div class="modal-kpi-label">Квал</div><div class="modal-kpi-value">${fmt(qual)}</div></div>
+      <div class="modal-kpi"><div class="modal-kpi-label">Заказы</div><div class="modal-kpi-value">${fmt(orders)}</div></div>
+      <div class="modal-kpi"><div class="modal-kpi-label">Выкупы</div><div class="modal-kpi-value">${fmt(buyouts)}</div></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Конверсии</div>
+      <table class="modal-table">
+        <tr><td>Качество лидов (квал/всего)</td><td class="num">${myConv}%</td><td class="num" style="color:${diffColor}">${diffStr} к команде</td></tr>
+        <tr><td>Из квала в заказ</td><td class="num">${pct(orders,qual)}%</td><td class="num" style="color:var(--text-dim)">команда: ${pct(all.reduce((s,d)=>s+d.orders,0), all.reduce((s,d)=>s+d.totalQ,0))}%</td></tr>
+        <tr><td>Из заказа в выкуп</td><td class="num">${pct(buyouts,orders)}%</td><td class="num" style="color:var(--text-dim)">команда: ${pct(all.reduce((s,d)=>s+d.buyouts,0), all.reduce((s,d)=>s+d.orders,0))}%</td></tr>
+      </table>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Каналы</div>
+      <table class="modal-table">
+        <tr><th>Канал</th><th class="num">Лиды</th><th class="num">Квал</th><th class="num">Качество</th></tr>
+        ${channels.map(c => `<tr><td>${c.name}</td><td class="num">${c.l}</td><td class="num">${c.q}</td><td class="num">${pct(c.q,c.l)}%</td></tr>`).join('')}
+      </table>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Динамика по дням</div>
+      <div class="modal-chart-wrap"><canvas id="modalChartCanvas"></canvas></div>
+    </div>
+  `;
+
+  openModal();
+
+  // График
+  const dayMap = {};
+  for (const d of o) {
+    const k = d.date.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit'});
+    if (!dayMap[k]) dayMap[k] = {leads:0,qual:0,orders:0};
+    dayMap[k].leads += d.total;
+    dayMap[k].qual += d.totalQ;
+    dayMap[k].orders += d.orders;
+  }
+  const labels = Object.keys(dayMap);
+  const leadsArr = labels.map(l => dayMap[l].leads);
+  const qualArr = labels.map(l => dayMap[l].qual);
+  const ordersArr = labels.map(l => dayMap[l].orders);
+
+  setTimeout(() => {
+    const ctx = document.getElementById('modalChartCanvas').getContext('2d');
+    modalChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label:'Лиды', data:leadsArr, borderColor:'#60A5FA', backgroundColor:'rgba(96,165,250,0.1)', tension:0.3, fill:true, borderWidth:2, pointRadius:0, pointHoverRadius:4 },
+          { label:'Квал', data:qualArr, borderColor:'#FF6B35', backgroundColor:'rgba(255,107,53,0.1)', tension:0.3, fill:true, borderWidth:2, pointRadius:0, pointHoverRadius:4 },
+          { label:'Заказы', data:ordersArr, borderColor:'#4ADE80', backgroundColor:'rgba(74,222,128,0.1)', tension:0.3, fill:true, borderWidth:2, pointRadius:0, pointHoverRadius:4 }
+        ]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#8B95A5', font:{size:11,family:'Manrope'}, padding:12, boxWidth:8, boxHeight:8 }}},
+        scales:{
+          x:{ grid:{color:'#252C37',drawBorder:false}, ticks:{color:'#5A6473',font:{size:10,family:'JetBrains Mono'}, maxRotation:0, autoSkip:true, maxTicksLimit:10}},
+          y:{ grid:{color:'#252C37',drawBorder:false}, ticks:{color:'#5A6473',font:{size:10,family:'JetBrains Mono'}}, beginAtZero:true}
+        }
+      }
+    });
+  }, 50);
+}
+
+function openShopMgr(name) {
+  const r = filterByPeriod(state.refusals).filter(d => d.manager === name);
+  if (!r.length) return;
+
+  const totalCount = r.reduce((s,d)=>s+d.count,0);
+  const totalLoss = r.reduce((s,d)=>s+d.loss,0);
+  const totalMargin = r.reduce((s,d)=>s+(d.margin>0?d.margin:0),0);
+
+  // Топ причин
+  const reasonMap = {};
+  for (const ref of r) {
+    const cat = categorizeReason(ref.reason);
+    if (!reasonMap[cat]) reasonMap[cat] = {count:0,loss:0};
+    reasonMap[cat].count += ref.count;
+    reasonMap[cat].loss += ref.loss;
+  }
+  const reasons = Object.entries(reasonMap).map(([k,v])=>({reason:k,...v})).sort((a,b)=>b.count-a.count);
+
+  // Сортировка отказов по дате (новые сверху)
+  const sortedR = [...r].sort((a,b)=>b.date-a.date);
+
+  const avgCheck = totalCount > 0 ? Math.round(totalLoss/totalCount) : 0;
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">${name}</div>
+      <div class="modal-sub">менеджер магазина · ${totalCount} отказов за период</div>
+    </div>
+
+    <div class="modal-kpi-row">
+      <div class="modal-kpi"><div class="modal-kpi-label">Отказов</div><div class="modal-kpi-value">${totalCount}</div></div>
+      <div class="modal-kpi"><div class="modal-kpi-label">Упущено</div><div class="modal-kpi-value">${fmtMoney(totalLoss)}</div></div>
+      <div class="modal-kpi"><div class="modal-kpi-label">Ср. чек</div><div class="modal-kpi-value">${fmtMoney(avgCheck)}</div></div>
+      <div class="modal-kpi"><div class="modal-kpi-label">Упущ. маржа</div><div class="modal-kpi-value">${fmtMoney(totalMargin)}</div></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Топ причин отказов</div>
+      <table class="modal-table">
+        <tr><th>Причина</th><th class="num">Кол-во</th><th class="num">Сумма</th></tr>
+        ${reasons.map(c => `<tr><td>${c.reason}</td><td class="num">${c.count}</td><td class="num" style="color:var(--red)">${c.loss>0?fmtMoney(c.loss):'—'}</td></tr>`).join('')}
+      </table>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Все отказы (новые сверху)</div>
+      <table class="modal-table">
+        <tr><th>Дата</th><th>Устройство</th><th>Причина</th><th class="num">Сумма</th></tr>
+        ${sortedR.slice(0,30).map(ref => {
+          const dateStr = ref.date.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit'});
+          return `<tr>
+            <td style="white-space:nowrap;color:var(--text-dim);font-family:'JetBrains Mono',monospace;font-size:11px;">${dateStr}</td>
+            <td>${ref.device || '—'}</td>
+            <td style="color:var(--text-dim);max-width:280px;">${ref.reason || '—'}</td>
+            <td class="num">${ref.cost>0?fmtMoney(ref.cost):'—'}</td>
+          </tr>`;
+        }).join('')}
+      </table>
+      ${sortedR.length > 30 ? `<div style="padding:10px;color:var(--text-muted);font-size:11px;text-align:center;">Показано 30 из ${sortedR.length}</div>` : ''}
+    </div>
+  `;
+
+  openModal();
+}
+
+
 document.querySelectorAll('.period-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
