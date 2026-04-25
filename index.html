@@ -603,12 +603,24 @@ let state = {
 // УТИЛИТЫ
 // ============================================================
 const fmt = n => isNaN(n) || n === null ? '—' : Math.round(n).toLocaleString('ru-RU');
-const fmtMoney = n => isNaN(n) || n === null ? '—' : Math.round(n/1000) + 'к ₽';
+const fmtMoney = n => {
+  if (isNaN(n) || n === null || n === 0) return '—';
+  if (n >= 1000000) return (n/1000000).toFixed(1).replace('.', ',') + ' млн ₽';
+  if (n >= 1000) return Math.round(n/1000) + ' тыс ₽';
+  return Math.round(n) + ' ₽';
+};
 const pct = (a, b) => b > 0 ? Math.round(a/b*100) : 0;
 
 function parseRu(val) {
-  if (!val) return 0;
-  const s = String(val).replace(/\s/g, '').replace(',', '.').replace(/[^\d.-]/g, '');
+  if (val === null || val === undefined || val === '') return 0;
+  let s = String(val).trim();
+  // Убираем "р.", "₽", "руб", пробелы, неразрывные пробелы
+  s = s.replace(/р\.|₽|руб\.?|\s|\u00A0/gi, '');
+  // Заменяем запятую на точку
+  s = s.replace(',', '.');
+  // Оставляем только цифры, точку и минус
+  s = s.replace(/[^\d.-]/g, '');
+  if (!s || s === '.' || s === '-') return 0;
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
@@ -678,12 +690,20 @@ async function loadData() {
 // ============================================================
 function parseOnline(rows) {
   const data = [];
-  // Ищем строки с датой формата дд.мм.гггг и сотрудником
+  const skipNames = ['итог','выполнение','план','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь','январь','февраль','сотрудник','имя'];
   for (const row of rows) {
     if (!row || row.length < 10) continue;
     const date = parseDate(row[0]);
     const name = (row[1] || '').trim();
-    if (!date || !name || name.toLowerCase() === 'итог' || name.toLowerCase() === 'выполнение' || name.toLowerCase() === 'план') continue;
+    if (!date || !name) continue;
+    const nameLow = name.toLowerCase();
+    if (skipNames.includes(nameLow)) continue;
+    // Имя должно быть похоже на имя (с буквы) и не слишком длинное
+    if (!/^[А-ЯЁA-Zа-яёa-z]/.test(name) || name.length > 30) continue;
+
+    const total = parseRu(row[12]);
+    // Защита от строк-итогов: если общее кол-во лидов > 500 за один день — это явно итог
+    if (total > 500) continue;
 
     data.push({
       date,
@@ -698,7 +718,7 @@ function parseOnline(rows) {
       tgQ: parseRu(row[9]),
       site: parseRu(row[10]),
       siteQ: parseRu(row[11]),
-      total: parseRu(row[12]),
+      total,
       totalQ: parseRu(row[13]),
       orders: parseRu(row[14]),
       buyouts: parseRu(row[15])
@@ -744,16 +764,21 @@ function parseRefusals(rows) {
     const count = parseRu(row[2]);
 
     if (date && (reason || device) && currentManager) {
+      // Санитизация: один отказ не может стоить >5 млн ₽ или иметь >50 единиц
+      const safeCount = (count > 0 && count < 50) ? count : 1;
+      const safeCost = (cost >= 0 && cost < 5000000) ? cost : 0;
+      const safePurchase = (purchase >= 0 && purchase < 5000000) ? purchase : 0;
+
       data.push({
         date,
         manager: currentManager,
-        count: count || 1,
+        count: safeCount,
         device,
         reason,
-        cost,
-        purchase,
-        loss: cost > 0 ? cost : 0,
-        margin: cost - purchase
+        cost: safeCost,
+        purchase: safePurchase,
+        loss: safeCost,
+        margin: safeCost - safePurchase
       });
     }
   }
