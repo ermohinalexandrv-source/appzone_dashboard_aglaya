@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Appzone Самара — Дашборд</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0F1115;
+  --surface: #161A21;
+  --surface-2: #1D232C;
+  --border: #252C37;
+  --text: #E8EAED;
+  --text-dim: #8B95A5;
+  --text-muted: #5A6473;
+  --accent: #FF6B35;
+  --accent-soft: rgba(255,107,53,0.12);
+  --green: #4ADE80;
+  --green-soft: rgba(74,222,128,0.12);
+  --red: #F87171;
+  --red-soft: rgba(248,113,113,0.12);
+  --amber: #FBBF24;
+  --amber-soft: rgba(251,191,36,0.12);
+  --blue: #60A5FA;
+  --blue-soft: rgba(96,165,250,0.12);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+/* HEADER */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.header-left h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.header-left .subtitle {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.header-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--border); }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover { background: #ff7d4d; }
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 6px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* PERIOD SWITCHER */
+.period-switcher {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.period-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  padding: 6px 12px;
+  border-radius: 5px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.period-btn.active { background: var(--accent); color: #fff; }
+.period-btn:hover:not(.active) { color: var(--text); }
+
+/* KPI GRID */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.kpi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.kpi-sub {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.kpi-trend {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+.trend-up { background: var(--green-soft); color: var(--green); }
+.trend-down { background: var(--red-soft); color: var(--red); }
+.trend-flat { background: var(--surface-2); color: var(--text-dim); }
+
+/* ALERTS */
+.alerts-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.section-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  border-left: 3px solid;
+}
+.alert:last-child { margin-bottom: 0; }
+.alert-critical { background: var(--red-soft); border-color: var(--red); }
+.alert-warn { background: var(--amber-soft); border-color: var(--amber); }
+.alert-info { background: var(--blue-soft); border-color: var(--blue); }
+.alert-good { background: var(--green-soft); border-color: var(--green); }
+.alert-icon {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.alert-critical .alert-icon { background: var(--red); color: #fff; }
+.alert-warn .alert-icon { background: var(--amber); color: #1F1500; }
+.alert-info .alert-icon { background: var(--blue); color: #061826; }
+.alert-good .alert-icon { background: var(--green); color: #032918; }
+.alert-body { flex: 1; }
+.alert-title { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+.alert-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+/* GRID LAYOUT */
+.grid-2col {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.card-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* CHART CONTAINER */
+.chart-wrap { position: relative; height: 280px; }
+.chart-wrap-sm { position: relative; height: 200px; }
+
+/* FUNNEL */
+.funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.funnel-step {
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  position: relative;
+  overflow: hidden;
+}
+.funnel-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: var(--accent-soft);
+  border-right: 2px solid var(--accent);
+}
+.funnel-content {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.funnel-label { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+.funnel-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.funnel-conv {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  text-align: left;
+  padding: 10px 8px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: 'JetBrains Mono', monospace; }
+tr:last-child td { border-bottom: none; }
+
+/* CHANNEL BARS */
+.channel-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 60px 50px;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.channel-name { font-size: 13px; font-weight: 500; }
+.channel-bar-wrap {
+  background: var(--surface-2);
+  height: 22px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.channel-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--accent));
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.channel-num { font-family: 'JetBrains Mono', monospace; font-size: 12px; text-align: right; }
+.channel-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-align: right;
+  color: var(--text-dim);
+}
+
+/* MANAGER CARDS */
+.mgr-list { display: flex; flex-direction: column; gap: 10px; }
+.mgr-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 80px 60px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+}
+.mgr-row.top { border-left-color: var(--green); }
+.mgr-row.mid { border-left-color: var(--amber); }
+.mgr-row.bad { border-left-color: var(--red); }
+.mgr-name { font-size: 13px; font-weight: 600; }
+.mgr-bar-wrap { background: var(--surface); height: 6px; border-radius: 3px; overflow: hidden; }
+.mgr-bar { height: 100%; background: var(--accent); }
+.mgr-num { font-family: 'JetBrains Mono', monospace; font-size: 12px; text-align: right; font-weight: 500; }
+.mgr-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); text-align: right; }
+
+/* LOSSES TABLE */
+.loss-row {
+  display: grid;
+  grid-template-columns: 1fr 80px 100px;
+  gap: 10px;
+  padding: 10px 0;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+.loss-row:last-child { border-bottom: none; }
+.loss-reason { font-size: 13px; font-weight: 500; }
+.loss-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+}
+.loss-amount {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  text-align: right;
+  color: var(--red);
+  font-weight: 600;
+}
+
+/* RECOMMENDATIONS */
+.rec-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.rec-card {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 14px;
+  border-top: 3px solid var(--accent);
+}
+.rec-target {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.rec-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.rec-desc { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+/* LOADING */
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* FOOTER */
+.footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+.footer a { color: var(--text-dim); text-decoration: none; border-bottom: 1px dashed var(--text-muted); }
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .grid-2col, .grid-3col { grid-template-columns: 1fr; }
+  .rec-grid { grid-template-columns: 1fr; }
+  .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .container { padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <h1>Appzone Самара</h1>
+      <div class="subtitle"><span class="status-dot"></span>Операционный дашборд · обновлено <span id="lastUpdate">—</span></div>
+    </div>
+    <div class="header-right">
+      <div class="period-switcher">
+        <button class="period-btn" data-period="week">Неделя</button>
+        <button class="period-btn active" data-period="month">Месяц</button>
+        <button class="period-btn" data-period="all">Всё</button>
+      </div>
+      <button class="btn btn-primary" onclick="loadData()">↻ Обновить</button>
+    </div>
+  </div>
+
+  <!-- KPI -->
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="kpi"><div class="kpi-label">Лиды</div><div class="kpi-value" id="kpiLeads">—</div><div class="kpi-sub">всего за период</div></div>
+    <div class="kpi"><div class="kpi-label">Квал. лиды</div><div class="kpi-value" id="kpiQual">—</div><div class="kpi-sub" id="kpiQualPct">— %</div></div>
+    <div class="kpi"><div class="kpi-label">Заказы</div><div class="kpi-value" id="kpiOrders">—</div><div class="kpi-sub" id="kpiOrdersPct">— конв.</div></div>
+    <div class="kpi"><div class="kpi-label">Выкупы</div><div class="kpi-value" id="kpiBuyouts">—</div><div class="kpi-sub" id="kpiBuyoutsPct">— конв.</div></div>
+    <div class="kpi"><div class="kpi-label">Отказы (магазин)</div><div class="kpi-value" id="kpiRefusals">—</div><div class="kpi-sub">фиксированных</div></div>
+    <div class="kpi"><div class="kpi-label">Упущено ₽</div><div class="kpi-value" id="kpiLoss">—</div><div class="kpi-sub">потенц. оборот</div></div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="alerts-section">
+    <div class="section-header">
+      <div class="section-title">⚠ Что требует внимания</div>
+      <div class="section-badge"><span id="alertCount">0</span> сигналов</div>
+    </div>
+    <div id="alertsList">
+      <div class="loader"><div class="spinner"></div>Загружаем данные...</div>
+    </div>
+  </div>
+
+  <!-- ONLINE DEPT BLOCK -->
+  <div class="grid-2col">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Лиды по дням</div>
+          <div class="card-sub">онлайн-отдел · все каналы</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="chartLeads"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Воронка</div>
+          <div class="card-sub">лид → выкуп</div>
+        </div>
+      </div>
+      <div class="funnel" id="funnel"></div>
+    </div>
+  </div>
+
+  <div class="grid-2col">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Каналы трафика</div>
+          <div class="card-sub">лиды и качество</div>
+        </div>
+      </div>
+      <div id="channels"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Онлайн-менеджеры</div>
+          <div class="card-sub">квал. лиды · конверсия</div>
+        </div>
+      </div>
+      <div class="mgr-list" id="mgrOnline"></div>
+    </div>
+  </div>
+
+  <!-- SHOP BLOCK -->
+  <div class="grid-2col">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Топ причин отказов</div>
+          <div class="card-sub">магазин · упущенная прибыль</div>
+        </div>
+      </div>
+      <div id="losses"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Менеджеры магазина</div>
+          <div class="card-sub">кол-во отказов</div>
+        </div>
+      </div>
+      <div class="mgr-list" id="mgrShop"></div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATIONS -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">→ Рекомендации</div>
+        <div class="card-sub">сгенерировано на основе данных</div>
+      </div>
+    </div>
+    <div class="rec-grid" id="recommendations"></div>
+  </div>
+
+  <div class="footer">
+    Дашборд читает данные напрямую из Google Sheets · обновляется при каждой загрузке страницы<br>
+    <span style="opacity:0.5">Для смены источников данных — отредактируй константы SHEETS_* в коде страницы</span>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// КОНФИГУРАЦИЯ
+// ============================================================
+// Сюда нужно вставить URL твоего Apps Script веб-приложения
+// (см. SETUP.md для инструкции)
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPo5BwMiT2H5REtzKIa77cUOAb7gaaBxz4-iAPZsepmMMneqKGcrrlBIIM_kKKlZ80/exec';
+
+// State
+let state = {
+  online: [],
+  refusals: [],
+  period: 'month'
+};
+
+// ============================================================
+// УТИЛИТЫ
+// ============================================================
+const fmt = n => isNaN(n) || n === null ? '—' : Math.round(n).toLocaleString('ru-RU');
+const fmtMoney = n => isNaN(n) || n === null ? '—' : Math.round(n/1000) + 'к ₽';
+const pct = (a, b) => b > 0 ? Math.round(a/b*100) : 0;
+
+function parseRu(val) {
+  if (!val) return 0;
+  const s = String(val).replace(/\s/g, '').replace(',', '.').replace(/[^\d.-]/g, '');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function parseDate(s) {
+  if (!s) return null;
+  const m = String(s).match(/(\d{1,2})[\.\/](\d{1,2})[\.\/](\d{4})/);
+  if (!m) return null;
+  return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
+}
+
+// ============================================================
+// ЗАГРУЗКА ДАННЫХ
+// ============================================================
+async function loadData() {
+  document.getElementById('alertsList').innerHTML = '<div class="loader"><div class="spinner"></div>Загружаем данные...</div>';
+
+  if (!APPS_SCRIPT_URL) {
+    document.getElementById('alertsList').innerHTML = '<div class="alert alert-critical"><div class="alert-icon">!</div><div class="alert-body"><div class="alert-title">URL Apps Script не настроен</div><div class="alert-desc">Открой index.html, найди строку <code>const APPS_SCRIPT_URL = \'\';</code> и вставь URL твоего веб-приложения. См. файл SETUP.md в репозитории.</div></div></div>';
+    return;
+  }
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (data.online && data.online.error) throw new Error('Online: ' + data.online.error);
+    if (data.refusals && data.refusals.error) throw new Error('Refusals: ' + data.refusals.error);
+
+    state.online = parseOnline(data.online || []);
+    state.refusals = parseRefusals(data.refusals || []);
+
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleString('ru-RU', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    render();
+  } catch (e) {
+    console.error('Load failed:', e);
+    document.getElementById('alertsList').innerHTML = `<div class="alert alert-critical"><div class="alert-icon">!</div><div class="alert-body"><div class="alert-title">Не удалось загрузить данные</div><div class="alert-desc">${e.message}<br>Проверь: 1) URL Apps Script правильный, 2) скрипт развёрнут с доступом "Все", 3) в Apps Script указаны правильные ID таблиц.</div></div></div>`;
+  }
+}
+
+// ============================================================
+// ПАРСИНГ ОНЛАЙН-ОТДЕЛА
+// ============================================================
+function parseOnline(rows) {
+  const data = [];
+  // Ищем строки с датой формата дд.мм.гггг и сотрудником
+  for (const row of rows) {
+    if (!row || row.length < 10) continue;
+    const date = parseDate(row[0]);
+    const name = (row[1] || '').trim();
+    if (!date || !name || name.toLowerCase() === 'итог' || name.toLowerCase() === 'выполнение' || name.toLowerCase() === 'план') continue;
+
+    data.push({
+      date,
+      name: name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(),
+      vk: parseRu(row[2]),
+      vkQ: parseRu(row[3]),
+      avito: parseRu(row[4]),
+      avitoQ: parseRu(row[5]),
+      inst: parseRu(row[6]),
+      instQ: parseRu(row[7]),
+      tg: parseRu(row[8]),
+      tgQ: parseRu(row[9]),
+      site: parseRu(row[10]),
+      siteQ: parseRu(row[11]),
+      total: parseRu(row[12]),
+      totalQ: parseRu(row[13]),
+      orders: parseRu(row[14]),
+      buyouts: parseRu(row[15])
+    });
+  }
+  return data;
+}
+
+// ============================================================
+// ПАРСИНГ ОТКАЗОВ
+// ============================================================
+function parseRefusals(rows) {
+  const data = [];
+  let currentManager = null;
+  let currentMonth = null;
+  const months = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+
+  for (const row of rows) {
+    if (!row || row.length < 5) continue;
+    const c0 = (row[0] || '').trim();
+    const c0low = c0.toLowerCase();
+
+    // Месяц
+    if (months.includes(c0low)) { currentMonth = c0low; continue; }
+    // Заголовок-имя менеджера (имя в первой колонке, остальные пустые)
+    if (c0 && !parseDate(row[1]) && !row[2] && !row[3]) {
+      const isName = /^[А-ЯЁA-Z][а-яёa-z]+/.test(c0) && c0low !== 'итого' && c0low !== 'имя сотрудника';
+      if (isName && !months.includes(c0low)) { currentManager = c0; continue; }
+    }
+    // Если в первой колонке имя, и есть данные дальше (формат "Саша | 18.03 | 0 | ...")
+    const possibleName = c0;
+    const dateInCol1 = parseDate(row[1]);
+    if (possibleName && dateInCol1 && /^[А-ЯЁA-Z]/.test(possibleName)) {
+      currentManager = possibleName;
+    }
+
+    // Дата отказа во второй колонке
+    const date = parseDate(row[1]);
+    const reason = (row[4] || '').trim();
+    const device = (row[3] || '').trim();
+    const cost = parseRu(row[5]);
+    const purchase = parseRu(row[6]);
+    const count = parseRu(row[2]);
+
+    if (date && (reason || device) && currentManager) {
+      data.push({
+        date,
+        manager: currentManager,
+        count: count || 1,
+        device,
+        reason,
+        cost,
+        purchase,
+        loss: cost > 0 ? cost : 0,
+        margin: cost - purchase
+      });
+    }
+  }
+  return data;
+}
+
+// ============================================================
+// ФИЛЬТРАЦИЯ ПО ПЕРИОДУ
+// ============================================================
+function filterByPeriod(arr) {
+  if (!arr.length) return [];
+  const now = new Date();
+  let cutoff;
+  if (state.period === 'week') {
+    cutoff = new Date(now); cutoff.setDate(now.getDate() - 7);
+  } else if (state.period === 'month') {
+    cutoff = new Date(now); cutoff.setDate(now.getDate() - 30);
+  } else {
+    return arr;
+  }
+  return arr.filter(d => d.date >= cutoff);
+}
+
+// ============================================================
+// КАТЕГОРИЗАЦИЯ ПРИЧИН ОТКАЗА
+// ============================================================
+function categorizeReason(text) {
+  const t = (text || '').toLowerCase();
+  if (/дорого|цен[аеуы]|бюджет|дешевл|снизить|нашёл дешев|нашел дешев/.test(t)) return 'Цена / дорого';
+  if (/нет в наличии|под заказ|нет в нал|только из наличия|сроки|ждать|сегодня нужен/.test(t)) return 'Нет в наличии';
+  if (/подумать|посоветоваться|думают|приценива|присматрива|изуча|рынок/.test(t)) return 'Ушёл подумать';
+  if (/трейд[ -]?ин|trade[ -]?in/.test(t)) return 'Трейд-ин';
+  if (/рассрочк|оплат|нал[ ]|безнал|карт|способ оплат/.test(t)) return 'Способ оплаты';
+  if (/конкурент|hi[ -]?store|хайстор|премиум|repremium/.test(t)) return 'Ушёл к конкуренту';
+  if (/не подошл|не нужн|не интересн|личн[ыо]|просто/.test(t)) return 'Не нужно / др.';
+  return 'Другое / не указано';
+}
+
+// ============================================================
+// РЕНДЕР
+// ============================================================
+function render() {
+  renderKPI();
+  renderAlerts();
+  renderLeadsChart();
+  renderFunnel();
+  renderChannels();
+  renderOnlineMgrs();
+  renderLosses();
+  renderShopMgrs();
+  renderRecommendations();
+}
+
+function renderKPI() {
+  const o = filterByPeriod(state.online);
+  const r = filterByPeriod(state.refusals);
+
+  const totalLeads = o.reduce((s,d)=>s+d.total,0);
+  const totalQual = o.reduce((s,d)=>s+d.totalQ,0);
+  const totalOrders = o.reduce((s,d)=>s+d.orders,0);
+  const totalBuy = o.reduce((s,d)=>s+d.buyouts,0);
+  const totalRef = r.reduce((s,d)=>s+d.count,0);
+  const totalLoss = r.reduce((s,d)=>s+d.loss,0);
+
+  document.getElementById('kpiLeads').textContent = fmt(totalLeads);
+  document.getElementById('kpiQual').textContent = fmt(totalQual);
+  document.getElementById('kpiQualPct').textContent = pct(totalQual,totalLeads) + ' % качества';
+  document.getElementById('kpiOrders').textContent = fmt(totalOrders);
+  document.getElementById('kpiOrdersPct').textContent = pct(totalOrders,totalQual) + ' % из квала';
+  document.getElementById('kpiBuyouts').textContent = fmt(totalBuy);
+  document.getElementById('kpiBuyoutsPct').textContent = pct(totalBuy,totalOrders) + ' % из заказов';
+  document.getElementById('kpiRefusals').textContent = fmt(totalRef);
+  document.getElementById('kpiLoss').textContent = fmtMoney(totalLoss);
+}
+
+function renderAlerts() {
+  const o = filterByPeriod(state.online);
+  const r = filterByPeriod(state.refusals);
+  const alerts = [];
+
+  // 1. Канал "сайт" слабый
+  const siteLeads = o.reduce((s,d)=>s+d.site,0);
+  const siteQual = o.reduce((s,d)=>s+d.siteQ,0);
+  if (siteLeads > 0 && pct(siteQual,siteLeads) < 15) {
+    alerts.push({type:'critical',icon:'!',title:`Сайт: ${pct(siteQual,siteLeads)}% качества из ${siteLeads} лидов`,desc:'Возможно снова сломаны кнопки "Заказать" или форма заявки не работает. Проверить главную и карточки товаров.'});
+  }
+
+  // 2. Авито мёртвый
+  const avLeads = o.reduce((s,d)=>s+d.avito,0);
+  if (avLeads < 5) {
+    alerts.push({type:'warn',icon:'⚠',title:`Авито: ${avLeads} лидов за период`,desc:'Канал практически не работает. Решить: вкладываться в развитие или закрывать ради экономии времени.'});
+  }
+
+  // 3. Конверсия в выкуп
+  const totalOrd = o.reduce((s,d)=>s+d.orders,0);
+  const totalBuy = o.reduce((s,d)=>s+d.buyouts,0);
+  if (totalOrd > 0 && pct(totalBuy,totalOrd) < 50) {
+    alerts.push({type:'warn',icon:'⚠',title:`Выкуп: ${pct(totalBuy,totalOrd)}% от заказов`,desc:`Из ${totalOrd} заказов выкуплено только ${totalBuy}. Либо проблема с выкупом, либо данные не заносятся.`});
+  }
+
+  // 4. Топ причина отказов
+  const reasonMap = {};
+  for (const ref of r) {
+    const cat = categorizeReason(ref.reason);
+    if (!reasonMap[cat]) reasonMap[cat] = {count:0,loss:0};
+    reasonMap[cat].count += ref.count;
+    reasonMap[cat].loss += ref.loss;
+  }
+  const topReason = Object.entries(reasonMap).sort((a,b)=>b[1].count-a[1].count)[0];
+  if (topReason && topReason[1].count >= 3) {
+    alerts.push({type:'critical',icon:'!',title:`Главная причина отказов: "${topReason[0]}" (${topReason[1].count} случаев)`,desc:`Упущено ~${fmtMoney(topReason[1].loss)}. Нужен скрипт-отработка под этот тип возражений и тренировка с менеджерами.`});
+  }
+
+  // 5. Менеджер с большим числом отказов
+  const mgrRef = {};
+  for (const ref of r) {
+    if (!mgrRef[ref.manager]) mgrRef[ref.manager] = 0;
+    mgrRef[ref.manager] += ref.count;
+  }
+  const topMgr = Object.entries(mgrRef).sort((a,b)=>b[1]-a[1])[0];
+  if (topMgr && topMgr[1] >= 5) {
+    alerts.push({type:'warn',icon:'⚠',title:`${topMgr[0]} — ${topMgr[1]} отказов`,desc:'Самый высокий показатель в команде магазина. Разобрать конкретные сделки на ближайшей планёрке.'});
+  }
+
+  // 6. Незаполненные причины
+  const empty = r.filter(d => !d.reason || categorizeReason(d.reason) === 'Другое / не указано').length;
+  if (empty >= 3) {
+    alerts.push({type:'info',icon:'ℹ',title:`${empty} отказов без чёткой причины`,desc:'Менеджеры не фиксируют, почему ушёл клиент. Ввести правило: каждый отказ = причина одним словом минимум.'});
+  }
+
+  // 7. Хорошие новости
+  if (totalBuy > 0 && pct(totalBuy,totalOrd) >= 70) {
+    alerts.push({type:'good',icon:'✓',title:`Отличный выкуп: ${pct(totalBuy,totalOrd)}%`,desc:'Команда хорошо доводит заказы до оплаты. Сохранить эту динамику.'});
+  }
+
+  // Render
+  document.getElementById('alertCount').textContent = alerts.length;
+  if (alerts.length === 0) {
+    document.getElementById('alertsList').innerHTML = '<div class="alert alert-good"><div class="alert-icon">✓</div><div class="alert-body"><div class="alert-title">Всё в порядке</div><div class="alert-desc">По текущим данным критических проблем не обнаружено.</div></div></div>';
+    return;
+  }
+  document.getElementById('alertsList').innerHTML = alerts.map(a => `
+    <div class="alert alert-${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-body">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-desc">${a.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+let leadsChart = null;
+function renderLeadsChart() {
+  const o = filterByPeriod(state.online);
+  // По дням
+  const dayMap = {};
+  for (const d of o) {
+    const k = d.date.toLocaleDateString('ru-RU', {day:'2-digit',month:'2-digit'});
+    if (!dayMap[k]) dayMap[k] = {leads:0,qual:0,orders:0};
+    dayMap[k].leads += d.total;
+    dayMap[k].qual += d.totalQ;
+    dayMap[k].orders += d.orders;
+  }
+  const labels = Object.keys(dayMap);
+  const leads = labels.map(l => dayMap[l].leads);
+  const qual = labels.map(l => dayMap[l].qual);
+  const orders = labels.map(l => dayMap[l].orders);
+
+  const ctx = document.getElementById('chartLeads').getContext('2d');
+  if (leadsChart) leadsChart.destroy();
+  leadsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Лиды', data:leads, borderColor:'#60A5FA', backgroundColor:'rgba(96,165,250,0.1)', tension:0.3, fill:true, borderWidth:2, pointRadius:0, pointHoverRadius:4 },
+        { label:'Квал', data:qual, borderColor:'#FF6B35', backgroundColor:'rgba(255,107,53,0.1)', tension:0.3, fill:true, borderWidth:2, pointRadius:0, pointHoverRadius:4 },
+        { label:'Заказы', data:orders, borderColor:'#4ADE80', backgroundColor:'rgba(74,222,128,0.1)', tension:0.3, fill:true, borderWidth:2, pointRadius:0, pointHoverRadius:4 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ color:'#8B95A5', font:{size:11,family:'Manrope'}, padding:12, boxWidth:8, boxHeight:8 }}},
+      scales:{
+        x:{ grid:{color:'#252C37',drawBorder:false}, ticks:{color:'#5A6473',font:{size:10,family:'JetBrains Mono'}, maxRotation:0, autoSkip:true, maxTicksLimit:10}},
+        y:{ grid:{color:'#252C37',drawBorder:false}, ticks:{color:'#5A6473',font:{size:10,family:'JetBrains Mono'}}, beginAtZero:true}
+      }
+    }
+  });
+}
+
+function renderFunnel() {
+  const o = filterByPeriod(state.online);
+  const leads = o.reduce((s,d)=>s+d.total,0);
+  const qual = o.reduce((s,d)=>s+d.totalQ,0);
+  const orders = o.reduce((s,d)=>s+d.orders,0);
+  const buyouts = o.reduce((s,d)=>s+d.buyouts,0);
+
+  const max = Math.max(leads,1);
+  const steps = [
+    {label:'Все лиды',val:leads,prev:null},
+    {label:'Квалифицированные',val:qual,prev:leads},
+    {label:'Заказы',val:orders,prev:qual},
+    {label:'Выкупы',val:buyouts,prev:orders}
+  ];
+  document.getElementById('funnel').innerHTML = steps.map(s => {
+    const w = (s.val/max)*100;
+    const conv = s.prev ? ` · ${pct(s.val,s.prev)}%` : '';
+    return `<div class="funnel-step">
+      <div class="funnel-fill" style="width:${w}%"></div>
+      <div class="funnel-content">
+        <span class="funnel-label">${s.label}</span>
+        <span><span class="funnel-value">${s.val}</span><span class="funnel-conv">${conv}</span></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderChannels() {
+  const o = filterByPeriod(state.online);
+  const ch = [
+    {name:'ВКонтакте',l:o.reduce((s,d)=>s+d.vk,0),q:o.reduce((s,d)=>s+d.vkQ,0)},
+    {name:'Telegram',l:o.reduce((s,d)=>s+d.tg,0),q:o.reduce((s,d)=>s+d.tgQ,0)},
+    {name:'Instagram',l:o.reduce((s,d)=>s+d.inst,0),q:o.reduce((s,d)=>s+d.instQ,0)},
+    {name:'Сайт',l:o.reduce((s,d)=>s+d.site,0),q:o.reduce((s,d)=>s+d.siteQ,0)},
+    {name:'Авито',l:o.reduce((s,d)=>s+d.avito,0),q:o.reduce((s,d)=>s+d.avitoQ,0)}
+  ].sort((a,b)=>b.l-a.l);
+  const max = Math.max(...ch.map(c=>c.l),1);
+  document.getElementById('channels').innerHTML = ch.map(c => `
+    <div class="channel-row">
+      <div class="channel-name">${c.name}</div>
+      <div class="channel-bar-wrap"><div class="channel-bar" style="width:${(c.l/max)*100}%"></div></div>
+      <div class="channel-num">${c.l}</div>
+      <div class="channel-pct">${pct(c.q,c.l)}%</div>
+    </div>
+  `).join('');
+}
+
+function renderOnlineMgrs() {
+  const o = filterByPeriod(state.online);
+  const mgr = {};
+  for (const d of o) {
+    if (!mgr[d.name]) mgr[d.name] = {leads:0,qual:0,orders:0,buyouts:0};
+    mgr[d.name].leads += d.total;
+    mgr[d.name].qual += d.totalQ;
+    mgr[d.name].orders += d.orders;
+    mgr[d.name].buyouts += d.buyouts;
+  }
+  const arr = Object.entries(mgr).map(([n,d]) => ({name:n,...d,convQ:pct(d.qual,d.leads),convO:pct(d.orders,d.qual)})).sort((a,b)=>b.qual-a.qual);
+  const max = Math.max(...arr.map(a=>a.qual),1);
+  document.getElementById('mgrOnline').innerHTML = arr.map(a => {
+    const cls = a.convQ >= 25 ? 'top' : a.convQ >= 15 ? 'mid' : 'bad';
+    return `<div class="mgr-row ${cls}">
+      <div class="mgr-name">${a.name}</div>
+      <div class="mgr-bar-wrap"><div class="mgr-bar" style="width:${(a.qual/max)*100}%"></div></div>
+      <div class="mgr-num">${a.qual} квал</div>
+      <div class="mgr-meta">${a.convQ}%</div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text-muted);text-align:center;padding:20px;">Нет данных</div>';
+}
+
+function renderLosses() {
+  const r = filterByPeriod(state.refusals);
+  const reasonMap = {};
+  for (const ref of r) {
+    const cat = categorizeReason(ref.reason);
+    if (!reasonMap[cat]) reasonMap[cat] = {count:0,loss:0};
+    reasonMap[cat].count += ref.count;
+    reasonMap[cat].loss += ref.loss;
+  }
+  const arr = Object.entries(reasonMap).map(([k,v])=>({reason:k,...v})).sort((a,b)=>b.count-a.count).slice(0,7);
+  document.getElementById('losses').innerHTML = arr.map(a => `
+    <div class="loss-row">
+      <div class="loss-reason">${a.reason}</div>
+      <div class="loss-count">${a.count} шт</div>
+      <div class="loss-amount">${a.loss > 0 ? '−'+fmtMoney(a.loss) : '—'}</div>
+    </div>
+  `).join('') || '<div style="color:var(--text-muted);text-align:center;padding:20px;">Нет данных по отказам</div>';
+}
+
+function renderShopMgrs() {
+  const r = filterByPeriod(state.refusals);
+  const mgr = {};
+  for (const ref of r) {
+    if (!mgr[ref.manager]) mgr[ref.manager] = {count:0,loss:0};
+    mgr[ref.manager].count += ref.count;
+    mgr[ref.manager].loss += ref.loss;
+  }
+  const arr = Object.entries(mgr).map(([n,d])=>({name:n,...d})).sort((a,b)=>b.count-a.count);
+  const max = Math.max(...arr.map(a=>a.count),1);
+  document.getElementById('mgrShop').innerHTML = arr.map(a => {
+    const cls = a.count <= 3 ? 'top' : a.count <= 8 ? 'mid' : 'bad';
+    return `<div class="mgr-row ${cls}">
+      <div class="mgr-name">${a.name}</div>
+      <div class="mgr-bar-wrap"><div class="mgr-bar" style="width:${(a.count/max)*100}%"></div></div>
+      <div class="mgr-num">${a.count} отк</div>
+      <div class="mgr-meta">${a.loss>0?fmtMoney(a.loss):''}</div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text-muted);text-align:center;padding:20px;">Нет данных</div>';
+}
+
+function renderRecommendations() {
+  const o = filterByPeriod(state.online);
+  const r = filterByPeriod(state.refusals);
+  const recs = [];
+
+  // Анализ: канал с лучшим качеством
+  const channels = [
+    {name:'ВКонтакте',l:o.reduce((s,d)=>s+d.vk,0),q:o.reduce((s,d)=>s+d.vkQ,0)},
+    {name:'Telegram',l:o.reduce((s,d)=>s+d.tg,0),q:o.reduce((s,d)=>s+d.tgQ,0)},
+    {name:'Instagram',l:o.reduce((s,d)=>s+d.inst,0),q:o.reduce((s,d)=>s+d.instQ,0)},
+    {name:'Сайт',l:o.reduce((s,d)=>s+d.site,0),q:o.reduce((s,d)=>s+d.siteQ,0)}
+  ].filter(c=>c.l>0).map(c=>({...c,pct:pct(c.q,c.l)})).sort((a,b)=>b.pct-a.pct);
+
+  if (channels.length) {
+    const best = channels[0], worst = channels[channels.length-1];
+    if (best.pct - worst.pct > 15) {
+      recs.push({target:'Каналы', title:`Перераспределить бюджет на ${best.name}`, desc:`У ${best.name} качество ${best.pct}% против ${worst.pct}% у ${worst.name}. Рассмотреть, что работает в лучшем канале и применить к остальным, либо просто увеличить вложения в ${best.name}.`});
+    }
+  }
+
+  // Топ причины отказов
+  const reasonMap = {};
+  for (const ref of r) {
+    const cat = categorizeReason(ref.reason);
+    if (!reasonMap[cat]) reasonMap[cat] = 0;
+    reasonMap[cat] += ref.count;
+  }
+  const topReasons = Object.entries(reasonMap).sort((a,b)=>b[1]-a[1]).slice(0,2);
+  for (const [reason, count] of topReasons) {
+    if (count < 2) continue;
+    if (reason === 'Цена / дорого') {
+      recs.push({target:'Скрипт', title:'Отработка возражения "дорого"', desc:`${count} отказов из-за цены. Внедрить скрипт "почему у нас, а не там" — гарантия, оригинальность, сервис, скорость. Цена должна звучать ПОСЛЕ ценности, а не до.`});
+    } else if (reason === 'Способ оплаты') {
+      recs.push({target:'Скрипт', title:'Системная работа с рассрочкой и оплатой', desc:`${count} отказов из-за способа оплаты. Тренинг по комбинированной оплате (часть налом, часть в рассрочку), презентация рассрочки как выгоды, а не "плана Б".`});
+    } else if (reason === 'Ушёл подумать') {
+      recs.push({target:'Якорь', title:'Не отпускать "думающих" клиентов без контакта', desc:`${count} клиентов "ушли подумать". Внедрить: всегда брать контакт, фиксировать условия (цвет/память/цена), договариваться о повторном касании через 1-3 дня.`});
+    } else if (reason === 'Нет в наличии') {
+      recs.push({target:'Логистика', title:'Сократить разрыв "нет в наличии"', desc:`${count} клиентов ушли из-за отсутствия товара. Скрипт "доставка за день" + бонус за ожидание (скидка/чехол), пересмотреть ассортимент критичных позиций.`});
+    }
+  }
+
+  // Сайт с низкой конверсией
+  const siteL = o.reduce((s,d)=>s+d.site,0);
+  const siteQ = o.reduce((s,d)=>s+d.siteQ,0);
+  if (siteL > 10 && pct(siteQ,siteL) < 15) {
+    recs.push({target:'Сайт', title:'Срочный аудит формы заявки', desc:`Из ${siteL} лидов с сайта только ${siteQ} квалифицированных (${pct(siteQ,siteL)}%). Это похоже на проблему со сломанными кнопками "Заказать" или формой обратной связи. Прогнать чек-лист.`});
+  }
+
+  // Конверсия в выкуп
+  const totOrd = o.reduce((s,d)=>s+d.orders,0);
+  const totBuy = o.reduce((s,d)=>s+d.buyouts,0);
+  if (totOrd > 5 && pct(totBuy,totOrd) < 60) {
+    recs.push({target:'Воронка', title:'Узкое место — выкуп заказов', desc:`Из ${totOrd} заказов выкуплено только ${totBuy} (${pct(totBuy,totOrd)}%). Разобрать, что происходит между "заказал" и "выкупил": сроки, условия оплаты, повторное касание.`});
+  }
+
+  // Если рекомендаций мало — добавим общие
+  if (recs.length < 2) {
+    recs.push({target:'Дисциплина', title:'Полнота фиксации отказов', desc:'Ввести правило "ни одного отказа без причины + предложенной отработки". Раз в неделю на планёрке — разбор 3 худших ситуаций.'});
+    recs.push({target:'Регулярность', title:'Еженедельный разбор данных', desc:'Каждый понедельник — 30 минут перед сменой: смотрим этот дашборд, обсуждаем 1 узкое место, формулируем 1 эксперимент на неделю.'});
+  }
+
+  document.getElementById('recommendations').innerHTML = recs.slice(0,6).map(r => `
+    <div class="rec-card">
+      <div class="rec-target">→ ${r.target}</div>
+      <div class="rec-title">${r.title}</div>
+      <div class="rec-desc">${r.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// PERIOD SWITCHER
+// ============================================================
+document.querySelectorAll('.period-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.period = btn.dataset.period;
+    render();
+  });
+});
+
+// ============================================================
+// START
+// ============================================================
+loadData();
+</script>
+
+</body>
+</html>
